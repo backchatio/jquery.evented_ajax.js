@@ -1,7 +1,6 @@
 require 'rubygems'
 require 'em-websocket'
 require 'sinatra/base'
-require 'thin'
 require 'json'
 
 EventMachine.run do  
