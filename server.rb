@@ -8,6 +8,7 @@ EventMachine.run do
   @@channel = EM::Channel.new
   
   class App < Sinatra::Base
+    set :env, :production
     set :public, File.dirname(__FILE__) + '/public'
     
     DELAY = 3
@@ -52,5 +53,5 @@ EventMachine.run do
     }
   end
   
-  #App.run!
+  App.run!
 end
