@@ -52,5 +52,5 @@ EventMachine.run do
     }
   end
   
-  App.run!
+  App.run!({:port => 80})
 end
