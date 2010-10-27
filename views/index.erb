@@ -1,0 +1,118 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+  <head>
+    <meta charset="utf-8" />
+    <title>jQuery.eventedAjax and jQuery.future sample usage</title>
+    <script src='http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js'></script>
+    <script src='jquery.evented_ajax.min.js'></script>
+    <script>
+      $(document).ready(function(){
+        function log(source, str) {
+          $("#" + source).append("<li>"+str+"</li>");
+        }
+        
+        if("WebSocket" in window === false) {
+          log("websocket", "Sorry, WebSockets are not supported by your browser. Try again in another browser, like WebKit for example.");
+          $("#buttons").hide();
+          return;
+        }
+        
+        var ajaxOptions = {
+          type: 'POST',
+          url: "/api/user/",
+          data: { "username": "dummyuser" },
+          success: function(data) {
+            json = $.parseJSON(data);
+            log("ajax", "The Ajax request has finished. Now we wait for the response event via the websocket namespaced myEventName." + json.clientMsgId + "<br>" + data);
+          },
+          error: function(req, status, errorThrown) {
+            log("ajax", "The Ajax request failed. " + status);
+          }
+        };
+        
+        var futureOptions = {
+          notificationElement: $("#eventNotifications"),
+          // These custom events would trigger the success callback
+          successEvents: ["UserCreated"],
+          success: function(e, data) {
+            log("future", "The future method worked! User created!");
+          },
+          errorEvents: ["UserCreationFailed", "UserExists"],
+          error: function(e, data) {
+            log("future", "The future method worked! But, one of the error event states were triggered.");
+          },
+          onFutureTimeout: function() {
+            log("future", "Your request timed out... we didn't receive any of the expected events via the websocket. The success and error event listener are removed so future events raised from websocket data will be ignored.");
+          }
+        };
+        
+        $.ajaxSetup(ajaxOptions);
+        $.futureSetup(futureOptions);
+        
+        $("#btnDemoSuccess").click(function(e) {
+          $.eventedAjax(ajaxOptions, futureOptions);
+        });
+        
+        $("#btnDemoError").click(function(e) {
+          // Extend the ajaxOptions to set a new username with $.extend
+          $.eventedAjax($.extend(true, {}, ajaxOptions, {data: { username: "existinguser" }}), futureOptions);
+        });
+        
+        $("#btnDemoTimeout").click(function(e) {
+          // Because we've used ajaxSetup and futureSetup we can just pass through changes in an options object
+          $.eventedAjax({}, { futureTimeout: 1000 });
+        });
+        
+        $("#btnClear").click(function(e){ $("ul").html(""); })
+        
+        var ws = new WebSocket("ws://localhost:8080/websocket");
+        ws.onmessage = function(evt) { 
+          var data = $.parseJSON(evt.data);
+          var eventName = data.event + (data.clientMsgId ? "." + data.clientMsgId : "");
+          $.futureOptions.notificationElement.trigger(eventName, data);
+          
+          log("websocket", "Data received: Triggering custom event: " + eventName + "<br>" + evt.data);
+        };
+        ws.onclose = function() { log("websocket", "socket closed"); };
+        ws.onopen = function() { log("websocket", "connected..."); };
+      });
+    </script>
+    <style>
+    body {
+      padding: 20px 30px;
+      margin: 0;
+      background: #ccc;
+      color: #222;
+    }
+    section {
+      border: 1px solid #fff;
+      background: #eee;
+      -moz-box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+      -webkit-box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+      padding: 10px;
+      margin: 10px 0;
+    }
+    </style>
+  </head>
+  <body>
+    <h1>jQuery.eventedAjax</h1>
+    
+    <div id="buttons">
+      <button id="btnDemoSuccess">Create a new user</button>
+      <button id="btnDemoError">Try to create a user that already exists</button>
+      <button id="btnDemoTimeout">Test timeout functionality</button>
+    </div>
+    
+    <section>
+      <h2>Logging</h2><button id="btnClear">Clear log</button>
+      <h3>Ajax</h3>
+      <ul id="ajax"></ul>
+      <h3>WebSocket</h3>
+      <ul id="websocket"></ul>
+      <h3>Future</h3>
+      <ul id="future"></ul>
+    </section>
+    
+    <div id="eventNotifications"></div>
+  </body>
+</html>
