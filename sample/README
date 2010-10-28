@@ -1,0 +1,3 @@
+This is a simple sample Sinatra (say that 3 times fast!) application that uses EventMachine and WebSockets to provide an evented backend server. 
+Run the sinatra application ("ruby server.app") and browse to it at http://localhost:4567/ - you'll be servered a simple debugging web page which will display the output of a sample usecase of jquery.evented_ajax.js.
+Clicking one of the 3 buttons at the top of the page will trigger an Ajax request, which will in turn trigger a delayed server side response (which will return over the WebSocket). The Ajax response, of course, will return immediately to tell you that the request has been queued and to expect the response over the WebSocket shortly.
