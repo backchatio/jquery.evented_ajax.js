@@ -11,6 +11,8 @@ method, but it provides an additional parameter, *futureOptions*.
 This *futureOptions* object contains the configuration for the triggering of a future event, raised from a stream (such as
 a websocket or comet stream).
 
+![Message Flows](doc/message-flow.png "Message flows")
+
 Usage
 -----
 
